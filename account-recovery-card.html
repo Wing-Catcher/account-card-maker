@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Account Recovery Card Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+/* ============================================================
+   CSS CUSTOM PROPERTIES — LIGHT & DARK THEMES
+   ============================================================ */
+:root {
+  --g-blue: #1a73e8;
+  --g-red: #ea4335;
+  --g-yellow: #fbbc04;
+  --g-green: #34a853;
+  --g-blue-light: #e8f0fe;
+  --g-red-light: #fce8e6;
+  --g-yellow-light: #fef7e0;
+  --g-green-light: #e6f4ea;
+
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --surface2: #f1f3f4;
+  --on-bg: #202124;
+  --on-surface: #3c4043;
+  --on-surface-dim: #80868b;
+  --border: #dadce0;
+  --shadow: rgba(60,64,67,.15);
+  --shadow2: rgba(60,64,67,.08);
+
+  --card-bg: #ffffff;
+  --card-border: #dadce0;
+  --accent-blue: #1a73e8;
+
+  --input-bg: #f8f9fa;
+  --input-border: #dadce0;
+  --input-focus: #1a73e8;
+  --label: #5f6368;
+
+  --btn-primary-bg: #1a73e8;
+  --btn-primary-fg: #fff;
+  --btn-danger-bg: #ea4335;
+  --btn-danger-fg: #fff;
+
+  --tab-active: #1a73e8;
+  --tab-inactive: #80868b;
+
+  --card-front-accent: linear-gradient(90deg, #1a73e8 40%, #ea4335 40% 55%, #fbbc04 55% 70%, #34a853 70%);
+}
+
+[data-theme="dark"] {
+  --bg: #1a1a1a;
+  --surface: #2d2d2d;
+  --surface2: #3c3c3c;
+  --on-bg: #e8eaed;
+  --on-surface: #bdc1c6;
+  --on-surface-dim: #80868b;
+  --border: #3c4043;
+  --shadow: rgba(0,0,0,.4);
+  --shadow2: rgba(0,0,0,.2);
+
+  --card-bg: #2d2d2d;
+  --card-border: #5f6368;
+
+  --input-bg: #3c3c3c;
+  --input-border: #5f6368;
+  --label: #9aa0a6;
+
+  --surface-card: #1e1e1e;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; scroll-behavior: smooth; }
+body {
+  font-family: 'Roboto', 'Google Sans', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--on-bg);
+  min-height: 100vh;
+  transition: background .2s, color .2s;
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 3px var(--shadow2);
+}
+
+.app-header .logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--on-bg);
+  text-decoration: none;
+}
+
+.logo-g {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, #ea4335 25%, #fbbc04 25% 50%, #34a853 50% 75%, #1a73e8 75%);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.main-content {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 0;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 56px);
+}
+
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.preview-panel {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  background: var(--bg);
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 24px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: 'Google Sans', sans-serif;
+  white-space: nowrap;
+}
+
+.btn:active { transform: scale(.97); }
+
+.btn-primary { background: var(--btn-primary-bg); color: var(--btn-primary-fg); border-color: var(--btn-primary-bg); }
+.btn-primary:hover { background: #1557b0; }
+
+.btn-outline { background: transparent; color: var(--g-blue); border-color: var(--g-blue); }
+.btn-outline:hover { background: var(--g-blue-light); }
+
+.btn-ghost { background: transparent; color: var(--on-surface); border-color: var(--border); }
+.btn-ghost:hover { background: var(--surface2); }
+
+.btn-danger { background: var(--btn-danger-bg); color: var(--btn-danger-fg); border-color: var(--btn-danger-bg); }
+.btn-danger:hover { background: #c62828; }
+
+.btn-sm { padding: 4px 10px; font-size: 12px; border-radius: 16px; }
+.btn-icon { padding: 8px; border-radius: 50%; min-width: 36px; height: 36px; justify-content: center; }
+
+.icon-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--on-surface-dim); padding: 4px 6px; border-radius: 4px;
+  display: inline-flex; align-items: center;
+  transition: background .15s, color .15s;
+  font-size: 13px;
+}
+.icon-btn:hover { background: var(--surface2); color: var(--on-surface); }
+.icon-btn.danger:hover { background: var(--g-red-light); color: var(--g-red); }
+
+/* ============================================================
+   FORM ELEMENTS
+   ============================================================ */
+.form-section {
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.form-section-header {
+  padding: 12px 16px;
+  background: var(--surface2);
+  font-family: 'Google Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--on-surface);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.form-section-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--label);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+input[type="text"], input[type="email"], input[type="date"], input[type="password"],
+select, textarea {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--on-bg);
+  font-family: 'Roboto', sans-serif;
+  transition: border-color .15s, box-shadow .15s;
+  width: 100%;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 2px rgba(26,115,232,.2);
+}
+
+textarea { resize: vertical; min-height: 60px; }
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--on-surface);
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 16px; height: 16px; cursor: pointer;
+  accent-color: var(--g-green);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   DYNAMIC LISTS
+   ============================================================ */
+.dynamic-list { display: flex; flex-direction: column; gap: 6px; }
+
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+
+.list-item input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 2px 4px;
+  font-size: 13px;
+  color: var(--on-bg);
+}
+
+.list-item input:focus { outline: none; box-shadow: none; border: none; }
+
+.drag-handle { cursor: grab; color: var(--on-surface-dim); font-size: 16px; line-height: 1; }
+.drag-handle:active { cursor: grabbing; }
+
+.add-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.add-item-row input {
+  flex: 1;
+  background: var(--input-bg);
+  border: 1px dashed var(--input-border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--on-bg);
+}
+
+.add-item-row input:focus { outline: none; border-color: var(--g-blue); border-style: solid; }
+
+/* ============================================================
+   TABS
+   ============================================================ */
+.tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--tab-inactive);
+  border-bottom: 2px solid transparent;
+  transition: all .15s;
+  font-family: 'Google Sans', sans-serif;
+  text-align: center;
+}
+
+.tab-btn.active {
+  color: var(--tab-active);
+  border-bottom-color: var(--tab-active);
+  background: var(--g-blue-light);
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: flex; flex-direction: column; gap: 14px; padding: 16px; }
+
+/* ============================================================
+   QR CODE SECTION
+   ============================================================ */
+.qr-controls { display: flex; gap: 6px; margin-bottom: 8px; }
+.qr-input-mode { display: flex; flex-direction: column; gap: 8px; }
+#qr-preview-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+}
+#qr-canvas { border-radius: 6px; }
+
+/* ============================================================
+   EXPORT TOOLBAR
+   ============================================================ */
+.export-bar {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   CARD PREVIEW
+   ============================================================ */
+.preview-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.preview-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--on-surface-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+/* Card: credit card ratio 85.60 x 53.98mm — use 2.5× scale at 96dpi ~323 × 204px */
+.card-scale-wrapper {
+  transform-origin: top center;
+}
+
+.card {
+  width: 323px;
+  height: 204px;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px var(--shadow), 0 1px 4px var(--shadow2);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  position: relative;
+  overflow: hidden;
+  font-family: 'Google Sans', Arial, sans-serif;
+  flex-shrink: 0;
+}
+
+/* Google-colored accent bar at right edge */
+.card::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 5px;
+  background: linear-gradient(to bottom, #1a73e8 25%, #ea4335 25% 50%, #fbbc04 50% 75%, #34a853 75%);
+}
+
+/* Bottom accent stripe */
+.card-bottom-stripe {
+  position: absolute;
+  bottom: 0; left: 0; right: 5px; height: 4px;
+  background: linear-gradient(90deg, #1a73e8 0% 40%, #ea4335 40% 55%, #fbbc04 55% 70%, #34a853 70%);
+}
+
+/* ---- FRONT CARD ---- */
+.card-front {
+  display: flex;
+  flex-direction: column;
+}
+
+.cf-header {
+  padding: 10px 16px 6px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.cf-logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cf-logo-g {
+  width: 20px; height: 20px;
+  background: linear-gradient(135deg, #ea4335 25%, #fbbc04 25% 50%, #34a853 50% 75%, #1a73e8 75%);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cf-logo-text {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--on-bg);
+  line-height: 1.15;
+}
+
+.cf-logo-sub {
+  font-size: 8px;
+  font-weight: 400;
+  color: var(--on-surface-dim);
+}
+
+.cf-service-icons {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.cf-service-icons span {
+  width: 14px; height: 14px;
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.icon-m { background: #ea4335; }
+.icon-d { background: #fbbc04; color: #000 !important; }
+.icon-c { background: #1a73e8; }
+.icon-p { background: #34a853; }
+.icon-y { background: #ea4335; }
+
+.cf-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  flex: 1;
+  padding: 6px 0 2px;
+}
+
+.cf-left, .cf-right {
+  padding: 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cf-left { border-right: 1px solid var(--border); }
+
+.cf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.cf-field-label {
+  font-size: 7px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: var(--g-blue);
+}
+
+.cf-field-value {
+  font-size: 9px;
+  color: var(--on-bg);
+  font-family: 'Roboto', sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+
+.cf-password-value {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .5px;
+}
+
+.cf-divider { border: none; border-top: 1px solid var(--border); margin: 2px 0; }
+
+.cf-security {
+  background: var(--g-green-light);
+  border: 1px solid var(--g-green);
+  border-radius: 4px;
+  padding: 4px 6px;
+  margin-top: 2px;
+}
+
+.cf-security-title {
+  font-size: 7px;
+  font-weight: 700;
+  color: var(--g-green);
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.cf-security-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+}
+
+.cf-security-item {
+  font-size: 6.5px;
+  color: var(--on-surface);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.cf-security-item .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--g-green);
+  flex-shrink: 0;
+}
+
+.cf-security-item .dot.off { background: #ccc; }
+
+.cf-footer {
+  border-top: 1px solid var(--border);
+  padding: 3px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cf-footer-text { font-size: 6px; color: var(--on-surface-dim); }
+.cf-importance {
+  font-size: 6.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+}
+
+.cf-importance.primary { background: #e8f0fe; color: var(--g-blue); }
+.cf-importance.secondary { background: var(--surface2); color: var(--on-surface); }
+.cf-importance.backup { background: var(--g-yellow-light); color: #b06000; }
+
+/* ---- BACK CARD ---- */
+.card-back {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px 6px 10px;
+  gap: 5px;
+}
+
+.cb-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 5px;
+  flex: 1;
+}
+
+.cb-col { display: flex; flex-direction: column; gap: 4px; }
+
+.cb-section-title {
+  font-size: 7px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.cb-section-title.blue { color: var(--g-blue); }
+.cb-section-title.red { color: var(--g-red); }
+.cb-section-title.green { color: var(--g-green); }
+.cb-section-title.yellow { color: #b06000; }
+.cb-section-title.purple { color: #7b1fa2; }
+
+.cb-qr {
+  background: white;
+  border-radius: 4px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  border: 1px solid var(--border);
+}
+
+.cb-qr-placeholder {
+  font-size: 7px;
+  color: var(--on-surface-dim);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.cb-qr img, .cb-qr canvas {
+  max-width: 54px !important;
+  max-height: 54px !important;
+  width: 54px !important;
+  height: 54px !important;
+  object-fit: contain;
+}
+
+.cb-codes {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px 4px;
+}
+
+.cb-code {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 6.5px;
+  color: var(--on-surface);
+  line-height: 1.5;
+}
+
+.cb-list { display: flex; flex-direction: column; gap: 1px; }
+
+.cb-list-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 7px;
+  color: var(--on-surface);
+  line-height: 1.4;
+}
+
+.cb-list-item .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.cb-list-item .num {
+  width: 10px; height: 10px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 6px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.cb-list-item .num.blue { background: var(--g-blue); }
+.cb-list-item .num.red { background: var(--g-red); }
+.cb-list-item .num.yellow { background: var(--g-yellow); color: #000; }
+.cb-list-item .num.green { background: var(--g-green); }
+.cb-list-item .num.purple { background: #7b1fa2; }
+
+.cb-recovery-matrix { display: flex; flex-direction: column; gap: 1px; }
+.cb-matrix-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 6.5px;
+  color: var(--on-surface);
+  padding: 1px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cb-matrix-row:last-child { border-bottom: none; }
+.cb-matrix-check { color: var(--g-green); font-size: 8px; }
+
+.cb-emergency { display: flex; flex-direction: column; gap: 2px; }
+.cb-em-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+  font-size: 6.5px;
+  color: var(--on-surface);
+  line-height: 1.3;
+}
+.cb-em-label { color: var(--on-surface-dim); min-width: 50px; }
+
+.cb-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 3px;
+  display: flex;
+  justify-content: space-between;
+}
+.cb-footer-text { font-size: 5.5px; color: var(--on-surface-dim); }
+
+/* ============================================================
+   TEMPLATE SELECTOR
+   ============================================================ */
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.template-card {
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all .15s;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--on-surface);
+}
+
+.template-card:hover { border-color: var(--g-blue); background: var(--g-blue-light); }
+.template-card.active { border-color: var(--g-blue); background: var(--g-blue-light); color: var(--g-blue); }
+.template-card .tpl-emoji { font-size: 20px; margin-bottom: 4px; }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  background: #323232;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.4);
+  animation: slideUp .2s ease;
+  pointer-events: all;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.toast.success { border-left: 4px solid var(--g-green); }
+.toast.error { border-left: 4px solid var(--g-red); }
+.toast.info { border-left: 4px solid var(--g-blue); }
+
+/* ============================================================
+   MISC UTILITY
+   ============================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.badge-blue { background: var(--g-blue-light); color: var(--g-blue); }
+
+.section-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 4px 0;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.scale-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--on-surface-dim);
+}
+
+.scale-control input[type="range"] {
+  width: 80px; cursor: pointer;
+  border: none; background: none; padding: 0;
+}
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 24px;
+  width: 360px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.4);
+}
+.modal h3 { font-size: 16px; margin-bottom: 12px; }
+.modal p { font-size: 13px; color: var(--on-surface); margin-bottom: 20px; line-height: 1.5; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ============================================================
+   DARK SECURITY THEME CARD OVERRIDES
+   ============================================================ */
+.theme-dark-security .card {
+  background: #0d1117;
+  border-color: #30363d;
+}
+
+.theme-dark-security .cf-header { border-bottom-color: #30363d; }
+.theme-dark-security .cf-logo-text { color: #c9d1d9; }
+.theme-dark-security .cf-logo-sub { color: #8b949e; }
+.theme-dark-security .cf-field-label { color: #58a6ff; }
+.theme-dark-security .cf-field-value { color: #c9d1d9; }
+.theme-dark-security .cf-left { border-right-color: #30363d; }
+.theme-dark-security .cf-divider { border-top-color: #30363d; }
+.theme-dark-security .cf-security { background: #0d4429; border-color: #238636; }
+.theme-dark-security .cf-security-title { color: #3fb950; }
+.theme-dark-security .cf-security-item { color: #c9d1d9; }
+.theme-dark-security .cf-footer { border-top-color: #30363d; }
+.theme-dark-security .cf-footer-text { color: #8b949e; }
+.theme-dark-security .card-bottom-stripe { background: linear-gradient(90deg, #388bfd 0% 40%, #f85149 40% 55%, #d29922 55% 70%, #3fb950 70%); }
+.theme-dark-security .card::after { background: linear-gradient(to bottom, #388bfd 25%, #f85149 25% 50%, #d29922 50% 75%, #3fb950 75%); }
+.theme-dark-security .cb-section-title.blue { color: #58a6ff; }
+.theme-dark-security .cb-section-title.red { color: #f85149; }
+.theme-dark-security .cb-section-title.green { color: #3fb950; }
+.theme-dark-security .cb-list-item { color: #c9d1d9; }
+.theme-dark-security .cb-code { color: #c9d1d9; }
+.theme-dark-security .cb-matrix-row { color: #c9d1d9; border-bottom-color: #30363d; }
+.theme-dark-security .cb-matrix-check { color: #3fb950; }
+.theme-dark-security .cb-em-row { color: #c9d1d9; }
+.theme-dark-security .cb-em-label { color: #8b949e; }
+.theme-dark-security .cb-footer { border-top-color: #30363d; }
+.theme-dark-security .cb-footer-text { color: #8b949e; }
+.theme-dark-security .cb-qr { background: #fff; }
+.theme-dark-security .cb-recovery-matrix { }
+
+/* Corporate Theme */
+.theme-corporate .card {
+  background: #f5f7fa;
+}
+.theme-corporate .cf-field-label { color: #1e3a5f; }
+.theme-corporate .card::after { background: linear-gradient(to bottom, #1e3a5f 25%, #c9222f 25% 50%, #e5a800 50% 75%, #1e6b3c 75%); }
+.theme-corporate .card-bottom-stripe { background: linear-gradient(90deg, #1e3a5f 0% 40%, #c9222f 40% 55%, #e5a800 55% 70%, #1e6b3c 70%); }
+
+/* Minimal Theme */
+.theme-minimal .card::after { background: #e0e0e0; }
+.theme-minimal .card-bottom-stripe { background: #e0e0e0; }
+.theme-minimal .cf-field-label { color: #757575; }
+.theme-minimal .cf-logo-g { background: #212121; }
+.theme-minimal .cf-security { background: #f5f5f5; border-color: #bdbdbd; }
+.theme-minimal .cf-security-title { color: #424242; }
+.theme-minimal .cf-security-item .dot { background: #616161; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+  .main-content { grid-template-columns: 1fr; }
+  .sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: none; overflow-y: visible; }
+  .preview-panel { padding: 16px; }
+  .field-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .app-header { padding: 0 12px; }
+  .header-actions .btn span { display: none; }
+  .export-bar { padding: 8px 12px; }
+}
+
+/* Print Styles */
+@media print {
+  .app-header, .sidebar, .export-bar, .preview-actions, .preview-label, .scale-control, .header-actions { display: none !important; }
+  .main-content { grid-template-columns: 1fr; }
+  .preview-panel { padding: 0; background: white; }
+  .preview-wrapper { flex-direction: row; justify-content: center; gap: 8mm; }
+  .card { box-shadow: none; border: 1px solid #ccc; }
+  body { background: white; }
+}
+
+/* Autosave indicator */
+.autosave-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--g-green);
+  display: inline-block;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .4; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<header class="app-header">
+  <div class="logo">
+    <div class="logo-g"></div>
+    <span>Account Recovery Card Builder</span>
+  </div>
+  <div class="header-actions">
+    <span class="autosave-dot" title="Auto-saving to localStorage"></span>
+    <button class="btn btn-ghost btn-sm" id="btn-import-json">📂 <span>Import</span></button>
+    <button class="btn btn-ghost btn-sm" id="btn-export-json">💾 <span>Export JSON</span></button>
+    <button class="btn btn-ghost btn-sm" id="btn-reset-sample">🔄 <span>Sample</span></button>
+    <button class="btn btn-danger btn-sm" id="btn-clear-all">🗑 <span>Clear</span></button>
+    <button class="btn btn-ghost btn-icon" id="btn-theme-toggle" title="Toggle dark mode">🌙</button>
+  </div>
+</header>
+
+<!-- ===================== MAIN ===================== -->
+<div class="main-content">
+
+  <!-- ===== SIDEBAR / FORM ===== -->
+  <aside class="sidebar">
+
+    <!-- Template Picker -->
+    <div class="form-section">
+      <div class="form-section-header">🎨 Template</div>
+      <div class="form-section-body">
+        <div class="template-grid" id="template-grid">
+          <div class="template-card active" data-tpl="google">
+            <div class="tpl-emoji">🎨</div>Google Style
+          </div>
+          <div class="template-card" data-tpl="minimal">
+            <div class="tpl-emoji">⬜</div>Minimal
+          </div>
+          <div class="template-card" data-tpl="corporate">
+            <div class="tpl-emoji">🏢</div>Corporate
+          </div>
+          <div class="template-card" data-tpl="dark-security">
+            <div class="tpl-emoji">🛡</div>Dark Security
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS: Front / Back -->
+    <div class="form-section">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="front-tab">🪪 Front</button>
+        <button class="tab-btn" data-tab="back-tab">🔒 Back</button>
+      </div>
+
+      <!-- FRONT TAB -->
+      <div class="tab-content active" id="front-tab">
+
+        <div class="form-section" style="border:none;border-radius:0;">
+          <div class="form-section-header" style="border-radius:0;margin:-16px -16px 12px;">📋 Account Info</div>
+          <div class="field">
+            <label>Account Nickname</label>
+            <input type="text" id="f-nickname" placeholder="Personal Main Account">
+          </div>
+          <div class="field">
+            <label>Email / Username</label>
+            <input type="email" id="f-email" placeholder="user@gmail.com">
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="text" id="f-password" placeholder="Str0ng#Pass">
+          </div>
+          <div class="field">
+            <label>Password Hint</label>
+            <input type="text" id="f-pw-hint" placeholder="First pet's name">
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Recovery Phone</label>
+              <input type="text" id="f-phone" placeholder="+1 555 000 0000">
+            </div>
+            <div class="field">
+              <label>Account Importance</label>
+              <select id="f-importance">
+                <option value="primary">PRIMARY</option>
+                <option value="secondary">SECONDARY</option>
+                <option value="backup">BACKUP</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Recovery Email</label>
+            <input type="email" id="f-recovery-email" placeholder="backup@email.com">
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Created On</label>
+              <input type="date" id="f-created">
+            </div>
+            <div class="field">
+              <label>Last Password Update</label>
+              <input type="date" id="f-pw-updated">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section" style="border:none;border-radius:0;border-top:1px solid var(--border);padding-top:12px;margin-top:-8px;">
+          <div class="form-section-header" style="border-radius:0;margin:-12px -16px 12px;">🛡 Security Status</div>
+          <label class="checkbox-row">
+            <input type="checkbox" id="s-2step"> 2-Step Verification Enabled
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="s-passkey"> Passkey Enabled
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="s-remail"> Recovery Email Configured
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="s-rphone"> Recovery Phone Configured
+          </label>
+        </div>
+
+      </div><!-- /front-tab -->
+
+      <!-- BACK TAB -->
+      <div class="tab-content" id="back-tab">
+
+        <!-- QR Code -->
+        <div class="form-section" style="border:none;border-radius:0;">
+          <div class="form-section-header" style="border-radius:0;margin:-16px -16px 12px;">📲 Authenticator QR</div>
+          <div class="qr-controls">
+            <button class="btn btn-sm btn-outline" id="qr-mode-text">Generate from Text</button>
+            <button class="btn btn-sm btn-ghost" id="qr-mode-upload">Upload Image</button>
+          </div>
+          <div class="qr-input-mode" id="qr-text-mode">
+            <input type="text" id="qr-text-input" placeholder="otpauth://... or any text">
+          </div>
+          <div class="qr-input-mode" id="qr-upload-mode" style="display:none;">
+            <input type="file" id="qr-file-input" accept="image/*" style="font-size:12px;">
+          </div>
+          <div id="qr-preview-container" style="margin-top:8px;"></div>
+        </div>
+
+        <!-- Backup Codes -->
+        <div class="form-section" style="border:none;border-radius:0;border-top:1px solid var(--border);padding-top:12px;margin-top:0;">
+          <div class="form-section-header" style="border-radius:0;margin:-12px -16px 12px;">🔑 Backup Verification Codes</div>
+          <div class="dynamic-list" id="backup-codes-list"></div>
+          <div class="add-item-row" style="margin-top:6px;">
+            <input type="text" id="backup-code-new" placeholder="1234 5678">
+            <button class="btn btn-sm btn-outline" id="btn-add-code">+ Add</button>
+          </div>
+        </div>
+
+        <!-- Passkey Locations -->
+        <div class="form-section" style="border:none;border-radius:0;border-top:1px solid var(--border);padding-top:12px;margin-top:0;">
+          <div class="form-section-header" style="border-radius:0;margin:-12px -16px 12px;">🔐 Passkey Locations</div>
+          <div class="dynamic-list" id="passkey-list"></div>
+          <div class="add-item-row" style="margin-top:6px;">
+            <input type="text" id="passkey-new" placeholder="e.g. iPhone 15, YubiKey">
+            <button class="btn btn-sm btn-outline" id="btn-add-passkey">+ Add</button>
+          </div>
+        </div>
+
+        <!-- Recovery Steps -->
+        <div class="form-section" style="border:none;border-radius:0;border-top:1px solid var(--border);padding-top:12px;margin-top:0;">
+          <div class="form-section-header" style="border-radius:0;margin:-12px -16px 12px;">📋 Recovery Steps</div>
+          <div class="dynamic-list" id="recovery-steps-list"></div>
+          <div class="add-item-row" style="margin-top:6px;">
+            <input type="text" id="recovery-step-new" placeholder="Step description">
+            <button class="btn btn-sm btn-outline" id="btn-add-step">+ Add</button>
+          </div>
+        </div>
+
+        <!-- Emergency Notes -->
+        <div class="form-section" style="border:none;border-radius:0;border-top:1px solid var(--border);padding-top:12px;margin-top:0;">
+          <div class="form-section-header" style="border-radius:0;margin:-12px -16px 12px;">🚨 Emergency Notes</div>
+          <div class="field-row">
+            <div class="field">
+              <label>Password Manager</label>
+              <input type="text" id="e-pm" placeholder="1Password">
+            </div>
+            <div class="field">
+              <label>Encrypted Backup</label>
+              <input type="text" id="e-backup" placeholder="Google Drive">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Vault Location</label>
+              <input type="text" id="e-vault" placeholder="Home Safe Box">
+            </div>
+            <div class="field">
+              <label>Last Security Audit</label>
+              <input type="date" id="e-audit">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Card Version</label>
+              <input type="text" id="e-version" placeholder="v1.0">
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /back-tab -->
+    </div>
+  </aside>
+
+  <!-- ===== PREVIEW PANEL ===== -->
+  <main class="preview-panel">
+    <div class="scale-control">
+      <span>Preview scale:</span>
+      <input type="range" id="scale-slider" min="0.8" max="2.5" step="0.1" value="1.5">
+      <span id="scale-label">1.5×</span>
+    </div>
+
+    <div class="preview-wrapper">
+      <div>
+        <div class="preview-label">FRONT</div>
+        <div id="card-front-wrapper" class="card-scale-wrapper">
+          <div class="card card-front" id="card-front">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="preview-label">BACK</div>
+        <div id="card-back-wrapper" class="card-scale-wrapper">
+          <div class="card card-back" id="card-back">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="preview-actions">
+      <button class="btn btn-primary" id="btn-export-front-png">📸 Front PNG</button>
+      <button class="btn btn-primary" id="btn-export-back-png">📸 Back PNG</button>
+      <button class="btn btn-outline" id="btn-export-both-png">🖼 Both PNG</button>
+      <button class="btn btn-outline" id="btn-export-pdf">📄 Export PDF</button>
+      <button class="btn btn-ghost" id="btn-print">🖨 Print</button>
+    </div>
+  </main>
+</div>
+
+<!-- Export Bar duplicate (small screen) -->
+<div class="export-bar" id="mobile-export-bar" style="display:none;">
+  <button class="btn btn-primary btn-sm" onclick="exportCardPng('front')">📸 Front</button>
+  <button class="btn btn-primary btn-sm" onclick="exportCardPng('back')">📸 Back</button>
+  <button class="btn btn-outline btn-sm" onclick="exportBothPng()">🖼 Both</button>
+  <button class="btn btn-outline btn-sm" onclick="exportPdf()">📄 PDF</button>
+  <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Print</button>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <h3 id="modal-title">Are you sure?</h3>
+    <p id="modal-body">This action cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+      <button class="btn btn-danger" id="modal-confirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Hidden file input for JSON import -->
+<input type="file" id="json-file-input" accept=".json" style="display:none;">
+
+<script>
+/* ============================================================
+   STATE
+   ============================================================ */
+let state = {
+  template: 'google',
+  front: {
+    nickname: '', email: '', password: '', pwHint: '',
+    phone: '', importance: 'primary', recoveryEmail: '',
+    created: '', pwUpdated: ''
+  },
+  security: { twoStep: true, passkey: true, rEmail: true, rPhone: true },
+  back: {
+    qrMode: 'text', // 'text' | 'upload'
+    qrText: '',
+    qrImageDataUrl: '',
+    backupCodes: [],
+    passkeyLocations: [],
+    recoverySteps: [],
+    pm: '', backup: '', vault: '', audit: '', version: 'v1.0'
+  },
+  darkMode: false
+};
+
+let qrInstance = null;
+let qrUploadDataUrl = '';
+
+/* ============================================================
+   SAMPLE DATA
+   ============================================================ */
+const SAMPLE = {
+  template: 'google',
+  front: {
+    nickname: 'Personal Main Account',
+    email: 'dummy.account@gmail.com',
+    password: 'DumM@y2024!',
+    pwHint: "First pet's name",
+    phone: '+1 (555) 123-4567',
+    importance: 'primary',
+    recoveryEmail: 'backup.dummy@gmail.com',
+    created: '2024-05-20',
+    pwUpdated: '2024-05-18'
+  },
+  security: { twoStep: true, passkey: true, rEmail: true, rPhone: true },
+  back: {
+    qrMode: 'text',
+    qrText: 'otpauth://totp/PersonalAccount?secret=JBSWY3DPEHPK3PXP&issuer=Google',
+    qrImageDataUrl: '',
+    backupCodes: ['1234 5678','2345 6789','3456 7890','4567 8901','5678 9012','6789 0123','7890 1234','8901 2345','9012 3456','0123 4567','1357 2468','2468 1357'],
+    passkeyLocations: ['Galaxy S24 (This Phone)', 'iPad Pro', 'Windows Laptop', 'YubiKey 5 NFC'],
+    recoverySteps: ['Try signing in with your password','Use a passkey from your device','Use Google Authenticator app','Use a backup verification code','Use recovery email or phone'],
+    pm: '1Password',
+    backup: 'Google Drive (Encrypted)',
+    vault: 'Home Safe Box',
+    audit: '2024-05-18',
+    version: 'v1.0'
+  },
+  darkMode: false
+};
+
+/* ============================================================
+   UTILS
+   ============================================================ */
+function fmt(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch { return dateStr; }
+}
+
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function confirm(title, body, cb) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').textContent = body;
+  document.getElementById('confirm-modal').classList.add('open');
+  document.getElementById('modal-confirm').onclick = () => {
+    document.getElementById('confirm-modal').classList.remove('open');
+    cb();
+  };
+}
+
+/* ============================================================
+   DYNAMIC LISTS (Backup Codes, Passkeys, Steps)
+   ============================================================ */
+function renderDynamicList(containerId, items, stateKey, colorClass) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  items.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'list-item';
+    row.draggable = true;
+    row.dataset.index = i;
+    row.innerHTML = `
+      <span class="drag-handle" title="Drag to reorder">⠿</span>
+      <input type="text" value="${esc(item)}" data-key="${stateKey}" data-idx="${i}">
+      <button class="icon-btn danger" data-key="${stateKey}" data-idx="${i}" title="Remove">✕</button>
+    `;
+    container.appendChild(row);
+
+    // drag events
+    row.addEventListener('dragstart', dragStart);
+    row.addEventListener('dragover', dragOver);
+    row.addEventListener('drop', (e) => drop(e, stateKey, containerId, colorClass));
+
+    row.querySelector('input').addEventListener('input', (e) => {
+      state.back[stateKey][i] = e.target.value;
+      renderCard();
+      debounceSave();
+    });
+
+    row.querySelector('.icon-btn').addEventListener('click', () => {
+      state.back[stateKey].splice(i, 1);
+      renderDynamicList(containerId, state.back[stateKey], stateKey, colorClass);
+      renderCard();
+      debounceSave();
+    });
+  });
+}
+
+let dragSrcIdx = null;
+function dragStart(e) { dragSrcIdx = parseInt(e.currentTarget.dataset.index); }
+function dragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+function drop(e, stateKey, containerId, colorClass) {
+  e.preventDefault();
+  const targetIdx = parseInt(e.currentTarget.dataset.index);
+  if (dragSrcIdx === null || dragSrcIdx === targetIdx) return;
+  const arr = state.back[stateKey];
+  const [moved] = arr.splice(dragSrcIdx, 1);
+  arr.splice(targetIdx, 0, moved);
+  renderDynamicList(containerId, arr, stateKey, colorClass);
+  renderCard();
+  debounceSave();
+  dragSrcIdx = null;
+}
+
+function addItem(stateKey, inputId, containerId, colorClass) {
+  const inp = document.getElementById(inputId);
+  const val = inp.value.trim();
+  if (!val) return;
+  state.back[stateKey].push(val);
+  inp.value = '';
+  renderDynamicList(containerId, state.back[stateKey], stateKey, colorClass);
+  renderCard();
+  debounceSave();
+}
+
+/* ============================================================
+   QR CODE
+   ============================================================ */
+function renderQR() {
+  const container = document.getElementById('qr-preview-container');
+  container.innerHTML = '';
+  if (state.back.qrMode === 'text' && state.back.qrText) {
+    const div = document.createElement('div');
+    div.id = 'qr-canvas';
+    container.appendChild(div);
+    try {
+      new QRCode(div, {
+        text: state.back.qrText,
+        width: 80, height: 80,
+        colorDark: '#000', colorLight: '#fff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch(e) {
+      container.innerHTML = '<span style="font-size:11px;color:#e53935;">Invalid QR text</span>';
+    }
+  } else if (state.back.qrMode === 'upload' && qrUploadDataUrl) {
+    const img = document.createElement('img');
+    img.src = qrUploadDataUrl;
+    img.style.cssText = 'max-width:80px;max-height:80px;border-radius:4px;';
+    container.appendChild(img);
+  } else {
+    container.innerHTML = '<span style="font-size:11px;color:#80868b;text-align:center;">Enter text above to generate QR</span>';
+  }
+  renderCard();
+}
+
+/* ============================================================
+   CARD RENDERER
+   ============================================================ */
+function getQRHtml() {
+  if (state.back.qrMode === 'text' && state.back.qrText) {
+    return '<div id="card-qr-inner"></div>';
+  } else if (state.back.qrMode === 'upload' && qrUploadDataUrl) {
+    return `<img src="${qrUploadDataUrl}" style="width:54px;height:54px;object-fit:contain;">`;
+  }
+  return '<div class="cb-qr-placeholder">Scan QR in<br>Google Authenticator</div>';
+}
+
+function renderCard() {
+  const s = state;
+  const f = s.front;
+  const sec = s.security;
+  const b = s.back;
+
+  const impClass = f.importance || 'primary';
+  const impLabel = (f.importance || 'primary').toUpperCase();
+
+  /* ---- FRONT ---- */
+  const frontEl = document.getElementById('card-front');
+  frontEl.innerHTML = `
+    <div class="cf-header">
+      <div class="cf-logo">
+        <div class="cf-logo-g"></div>
+        <div>
+          <div class="cf-logo-text">Google Account</div>
+          <div class="cf-logo-sub">Recovery Card</div>
+        </div>
+      </div>
+      <div class="cf-service-icons">
+        <span class="icon-m">M</span>
+        <span class="icon-d">▲</span>
+        <span class="icon-c">31</span>
+        <span class="icon-p">✿</span>
+        <span class="icon-y">▶</span>
+      </div>
+    </div>
+    <div class="cf-body">
+      <div class="cf-left">
+        <div class="cf-field">
+          <div class="cf-field-label">Account Nickname</div>
+          <div class="cf-field-value">${esc(f.nickname) || '—'}</div>
+        </div>
+        <hr class="cf-divider">
+        <div class="cf-field">
+          <div class="cf-field-label">Email / Username</div>
+          <div class="cf-field-value">${esc(f.email) || '—'}</div>
+        </div>
+        <hr class="cf-divider">
+        <div class="cf-field">
+          <div class="cf-field-label">Password</div>
+          <div class="cf-field-value cf-password-value">${esc(f.password) || '—'}</div>
+        </div>
+        <hr class="cf-divider">
+        <div class="cf-field">
+          <div class="cf-field-label">Recovery Phone</div>
+          <div class="cf-field-value">${esc(f.phone) || '—'}</div>
+        </div>
+        <hr class="cf-divider">
+        <div class="cf-field">
+          <div class="cf-field-label">Recovery Email</div>
+          <div class="cf-field-value">${esc(f.recoveryEmail) || '—'}</div>
+        </div>
+      </div>
+      <div class="cf-right">
+        <div class="cf-field">
+          <div class="cf-field-label">Created On</div>
+          <div class="cf-field-value">${esc(fmt(f.created)) || '—'}</div>
+        </div>
+        <div class="cf-field">
+          <div class="cf-field-label">Last Password Update</div>
+          <div class="cf-field-value">${esc(fmt(f.pwUpdated)) || '—'}</div>
+        </div>
+        <div class="cf-field">
+          <div class="cf-field-label">Password Hint</div>
+          <div class="cf-field-value">${esc(f.pwHint) || '—'}</div>
+        </div>
+        <hr class="cf-divider">
+        <div class="cf-security">
+          <div class="cf-security-title">✔ Security Status</div>
+          <div class="cf-security-grid">
+            <div class="cf-security-item"><span class="dot${sec.twoStep ? '' : ' off'}"></span>2-Step Verify</div>
+            <div class="cf-security-item"><span class="dot${sec.rEmail ? '' : ' off'}"></span>Recovery Email</div>
+            <div class="cf-security-item"><span class="dot${sec.passkey ? '' : ' off'}"></span>Passkey</div>
+            <div class="cf-security-item"><span class="dot${sec.rPhone ? '' : ' off'}"></span>Recovery Phone</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cf-footer">
+      <span class="cf-footer-text">🔒 Keep this card in a safe and secure place.</span>
+      <span class="cf-importance ${impClass}">${impLabel}</span>
+    </div>
+    <div class="card-bottom-stripe"></div>
+  `;
+
+  /* ---- BACK ---- */
+  const backEl = document.getElementById('card-back');
+
+  // Backup codes: up to 12 shown in 3 cols
+  const codes = b.backupCodes.slice(0, 12);
+  const codeHtml = codes.length
+    ? `<div class="cb-codes">${codes.map(c => `<div class="cb-code">${esc(c)}</div>`).join('')}</div>`
+    : '<div style="font-size:7px;color:var(--on-surface-dim);">No codes added</div>';
+
+  // Passkey locations
+  const pkHtml = b.passkeyLocations.slice(0, 5).map((p,i) => {
+    const colors = ['blue','red','yellow','green','purple'];
+    return `<div class="cb-list-item"><span class="dot" style="background:var(--g-${colors[i%5] === 'yellow' ? 'yellow' : colors[i%5]})"></span>${esc(p)}</div>`;
+  }).join('');
+
+  // Recovery steps
+  const stepColors = ['blue','red','yellow','green','purple'];
+  const stepsHtml = b.recoverySteps.slice(0, 5).map((s,i) =>
+    `<div class="cb-list-item"><span class="num ${stepColors[i]}">${i+1}</span>${esc(s)}</div>`
+  ).join('');
+
+  // Emergency notes
+  const emHtml = [
+    b.pm ? `<div class="cb-em-row"><span class="cb-em-label">Password mgr:</span> ${esc(b.pm)}</div>` : '',
+    b.backup ? `<div class="cb-em-row"><span class="cb-em-label">Enc. backup:</span> ${esc(b.backup)}</div>` : '',
+    b.vault ? `<div class="cb-em-row"><span class="cb-em-label">Vault:</span> ${esc(b.vault)}</div>` : '',
+    b.audit ? `<div class="cb-em-row"><span class="cb-em-label">Last audit:</span> ${esc(fmt(b.audit))}</div>` : '',
+  ].join('');
+
+  backEl.innerHTML = `
+    <div class="cb-grid">
+      <div class="cb-col">
+        <div class="cb-section-title blue">📲 Authenticator</div>
+        <div class="cb-qr">${getQRHtml()}</div>
+        <div style="font-size:6px;color:var(--on-surface-dim);text-align:center;margin-top:2px;">Scan in Google Authenticator</div>
+        <div class="cb-section-title red" style="margin-top:4px;">🔑 Backup Codes</div>
+        <div style="font-size:6.5px;color:var(--on-surface-dim);margin-bottom:2px;">Use one at a time when prompted.</div>
+        ${codeHtml}
+      </div>
+      <div class="cb-col">
+        <div class="cb-section-title green">🔐 Passkey Locations</div>
+        <div class="cb-list">${pkHtml || '<div style="font-size:7px;color:var(--on-surface-dim);">No passkeys</div>'}</div>
+        <div style="margin-top:4px;"></div>
+        <div class="cb-section-title blue">📋 Recovery Steps</div>
+        <div class="cb-list">${stepsHtml || '<div style="font-size:7px;color:var(--on-surface-dim);">No steps</div>'}</div>
+      </div>
+      <div class="cb-col">
+        <div class="cb-section-title green">✅ Recovery Matrix</div>
+        <div class="cb-recovery-matrix">
+          <div class="cb-matrix-row">Password <span class="cb-matrix-check">✔</span></div>
+          <div class="cb-matrix-row">Passkey <span class="cb-matrix-check" style="color:${sec.passkey?'var(--g-green)':'#ccc'}">✔</span></div>
+          <div class="cb-matrix-row">Auth App <span class="cb-matrix-check" style="color:${b.qrText||b.qrImageDataUrl?'var(--g-green)':'#ccc'}">✔</span></div>
+          <div class="cb-matrix-row">Backup Codes <span class="cb-matrix-check" style="color:${b.backupCodes.length?'var(--g-green)':'#ccc'}">✔</span></div>
+          <div class="cb-matrix-row">Recovery Email <span class="cb-matrix-check" style="color:${sec.rEmail?'var(--g-green)':'#ccc'}">✔</span></div>
+          <div class="cb-matrix-row">Recovery Phone <span class="cb-matrix-check" style="color:${sec.rPhone?'var(--g-green)':'#ccc'}">✔</span></div>
+        </div>
+        <div style="margin-top:4px;"></div>
+        <div class="cb-section-title purple">🚨 Emergency Notes</div>
+        <div class="cb-emergency">${emHtml || '<div style="font-size:7px;color:var(--on-surface-dim);">No notes</div>'}</div>
+      </div>
+    </div>
+    <div class="cb-footer">
+      <span class="cb-footer-text">⚠️ If you lose this card, account recovery may be difficult.</span>
+      <span class="cb-footer-text">Last Updated: ${esc(fmt(f.created)) || '—'} · ${esc(b.version) || 'v1.0'}</span>
+    </div>
+    <div class="card-bottom-stripe"></div>
+  `;
+
+  // Render inline QR in card
+  const cardQRInner = document.getElementById('card-qr-inner');
+  if (cardQRInner && b.qrMode === 'text' && b.qrText) {
+    try {
+      new QRCode(cardQRInner, {
+        text: b.qrText,
+        width: 54, height: 54,
+        colorDark: '#000', colorLight: '#fff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch(e) {
+      cardQRInner.innerHTML = '<span style="font-size:6px;color:#e53935;">Invalid</span>';
+    }
+  }
+}
+
+/* ============================================================
+   THEME / TEMPLATE
+   ============================================================ */
+function applyTemplate(tpl) {
+  state.template = tpl;
+  const preview = document.getElementById('card-front').parentElement;
+  const previewB = document.getElementById('card-back').parentElement;
+  const wrappers = [preview.closest('.card-scale-wrapper') || preview, previewB.closest('.card-scale-wrapper') || previewB];
+  const cards = [document.getElementById('card-front'), document.getElementById('card-back')];
+
+  cards.forEach(c => {
+    c.className = c.className.replace(/theme-\S+/g, '').trim();
+  });
+
+  if (tpl === 'dark-security') {
+    cards.forEach(c => c.classList.add('theme-dark-security'));
+  } else if (tpl === 'corporate') {
+    cards.forEach(c => c.classList.add('theme-corporate'));
+  } else if (tpl === 'minimal') {
+    cards.forEach(c => c.classList.add('theme-minimal'));
+  }
+
+  document.querySelectorAll('.template-card').forEach(el => {
+    el.classList.toggle('active', el.dataset.tpl === tpl);
+  });
+
+  debounceSave();
+}
+
+function toggleDarkMode() {
+  state.darkMode = !state.darkMode;
+  document.documentElement.setAttribute('data-theme', state.darkMode ? 'dark' : '');
+  document.getElementById('btn-theme-toggle').textContent = state.darkMode ? '☀️' : '🌙';
+  debounceSave();
+}
+
+/* ============================================================
+   SYNC FORM → STATE
+   ============================================================ */
+function syncFormToState() {
+  const s = state;
+  s.front.nickname = document.getElementById('f-nickname').value;
+  s.front.email = document.getElementById('f-email').value;
+  s.front.password = document.getElementById('f-password').value;
+  s.front.pwHint = document.getElementById('f-pw-hint').value;
+  s.front.phone = document.getElementById('f-phone').value;
+  s.front.importance = document.getElementById('f-importance').value;
+  s.front.recoveryEmail = document.getElementById('f-recovery-email').value;
+  s.front.created = document.getElementById('f-created').value;
+  s.front.pwUpdated = document.getElementById('f-pw-updated').value;
+  s.security.twoStep = document.getElementById('s-2step').checked;
+  s.security.passkey = document.getElementById('s-passkey').checked;
+  s.security.rEmail = document.getElementById('s-remail').checked;
+  s.security.rPhone = document.getElementById('s-rphone').checked;
+  s.back.pm = document.getElementById('e-pm').value;
+  s.back.backup = document.getElementById('e-backup').value;
+  s.back.vault = document.getElementById('e-vault').value;
+  s.back.audit = document.getElementById('e-audit').value;
+  s.back.version = document.getElementById('e-version').value;
+  s.back.qrText = document.getElementById('qr-text-input').value;
+  renderCard();
+}
+
+/* ============================================================
+   SYNC STATE → FORM
+   ============================================================ */
+function populateForm() {
+  const s = state;
+  document.getElementById('f-nickname').value = s.front.nickname || '';
+  document.getElementById('f-email').value = s.front.email || '';
+  document.getElementById('f-password').value = s.front.password || '';
+  document.getElementById('f-pw-hint').value = s.front.pwHint || '';
+  document.getElementById('f-phone').value = s.front.phone || '';
+  document.getElementById('f-importance').value = s.front.importance || 'primary';
+  document.getElementById('f-recovery-email').value = s.front.recoveryEmail || '';
+  document.getElementById('f-created').value = s.front.created || '';
+  document.getElementById('f-pw-updated').value = s.front.pwUpdated || '';
+  document.getElementById('s-2step').checked = !!s.security.twoStep;
+  document.getElementById('s-passkey').checked = !!s.security.passkey;
+  document.getElementById('s-remail').checked = !!s.security.rEmail;
+  document.getElementById('s-rphone').checked = !!s.security.rPhone;
+  document.getElementById('e-pm').value = s.back.pm || '';
+  document.getElementById('e-backup').value = s.back.backup || '';
+  document.getElementById('e-vault').value = s.back.vault || '';
+  document.getElementById('e-audit').value = s.back.audit || '';
+  document.getElementById('e-version').value = s.back.version || 'v1.0';
+  document.getElementById('qr-text-input').value = s.back.qrText || '';
+  renderDynamicList('backup-codes-list', s.back.backupCodes, 'backupCodes', 'blue');
+  renderDynamicList('passkey-list', s.back.passkeyLocations, 'passkeyLocations', 'green');
+  renderDynamicList('recovery-steps-list', s.back.recoverySteps, 'recoverySteps', 'yellow');
+  applyTemplate(s.template || 'google');
+  if (s.darkMode) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('btn-theme-toggle').textContent = '☀️';
+  }
+  renderQR();
+  renderCard();
+}
+
+/* ============================================================
+   LOCAL STORAGE
+   ============================================================ */
+let saveTimer;
+function debounceSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveState, 600);
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('arc_state', JSON.stringify(state));
+  } catch(e) { /* quota exceeded */ }
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('arc_state');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Deep merge to keep any new keys
+      state = Object.assign({}, SAMPLE, parsed);
+      state.front = Object.assign({}, SAMPLE.front, parsed.front);
+      state.security = Object.assign({}, SAMPLE.security, parsed.security);
+      state.back = Object.assign({}, SAMPLE.back, parsed.back);
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+/* ============================================================
+   EXPORT FUNCTIONS
+   ============================================================ */
+async function exportCardPng(side) {
+  const el = document.getElementById(`card-${side}`);
+  // temporarily remove transform
+  const wrapper = document.getElementById(`card-${side}-wrapper`);
+  const prev = wrapper.style.transform;
+  wrapper.style.transform = 'scale(1)';
+  wrapper.style.transformOrigin = 'top left';
+
+  try {
+    const canvas = await html2canvas(el, {
+      scale: 3,
+      backgroundColor: null,
+      useCORS: true,
+      logging: false
+    });
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = `recovery-card-${side}-${Date.now()}.png`;
+    a.click();
+    toast(`${side.charAt(0).toUpperCase()+side.slice(1)} card exported as PNG ✓`, 'success');
+  } catch(e) {
+    toast('Export failed: ' + e.message, 'error');
+  }
+  wrapper.style.transform = prev;
+}
+
+async function exportBothPng() {
+  await exportCardPng('front');
+  setTimeout(() => exportCardPng('back'), 400);
+}
+
+async function exportPdf() {
+  const { jsPDF } = window.jspdf;
+  try {
+    const frontEl = document.getElementById('card-front');
+    const backEl = document.getElementById('card-back');
+    const frontWrapper = document.getElementById('card-front-wrapper');
+    const backWrapper = document.getElementById('card-back-wrapper');
+    const prevF = frontWrapper.style.transform;
+    const prevB = backWrapper.style.transform;
+    frontWrapper.style.transform = 'scale(1)';
+    backWrapper.style.transform = 'scale(1)';
+
+    const frontCanvas = await html2canvas(frontEl, { scale: 3, backgroundColor: '#fff', useCORS: true, logging: false });
+    const backCanvas = await html2canvas(backEl, { scale: 3, backgroundColor: '#fff', useCORS: true, logging: false });
+
+    // Credit card: 85.6 × 53.98 mm
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [85.6, 53.98] });
+    pdf.addImage(frontCanvas.toDataURL('image/png'), 'PNG', 0, 0, 85.6, 53.98);
+    pdf.addPage([85.6, 53.98], 'landscape');
+    pdf.addImage(backCanvas.toDataURL('image/png'), 'PNG', 0, 0, 85.6, 53.98);
+    pdf.save(`recovery-card-${Date.now()}.pdf`);
+    toast('PDF exported (2 pages: front & back) ✓', 'success');
+
+    frontWrapper.style.transform = prevF;
+    backWrapper.style.transform = prevB;
+  } catch(e) {
+    toast('PDF export failed: ' + e.message, 'error');
+  }
+}
+
+/* ============================================================
+   JSON IMPORT / EXPORT
+   ============================================================ */
+function exportJson() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `recovery-card-${Date.now()}.json`;
+  a.click();
+  toast('JSON exported ✓', 'success');
+}
+
+function importJson(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      state = Object.assign({}, SAMPLE, parsed);
+      state.front = Object.assign({}, SAMPLE.front, parsed.front || {});
+      state.security = Object.assign({}, SAMPLE.security, parsed.security || {});
+      state.back = Object.assign({}, SAMPLE.back, parsed.back || {});
+      populateForm();
+      saveState();
+      toast('JSON imported successfully ✓', 'success');
+    } catch(err) {
+      toast('Invalid JSON file', 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ============================================================
+   SCALE SLIDER
+   ============================================================ */
+function applyScale(val) {
+  document.getElementById('scale-label').textContent = val + '×';
+  document.getElementById('card-front-wrapper').style.transform = `scale(${val})`;
+  document.getElementById('card-back-wrapper').style.transform = `scale(${val})`;
+  const cardH = 204;
+  const margin = 24;
+  const wrappers = document.querySelectorAll('.card-scale-wrapper');
+  wrappers.forEach(w => {
+    const scaledH = cardH * val;
+    w.style.marginBottom = `${scaledH - cardH + margin}px`;
+    w.style.marginRight = `${323 * val - 323}px`;
+  });
+}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tabId = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+  });
+});
+
+/* ============================================================
+   EVENT LISTENERS
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  // Load state
+  if (!loadState()) {
+    state = JSON.parse(JSON.stringify(SAMPLE));
+  }
+  populateForm();
+
+  // Form input listeners
+  document.querySelectorAll('input[type="text"], input[type="email"], input[type="date"], select').forEach(el => {
+    el.addEventListener('input', () => { syncFormToState(); debounceSave(); });
+    el.addEventListener('change', () => { syncFormToState(); debounceSave(); });
+  });
+
+  document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+    el.addEventListener('change', () => { syncFormToState(); debounceSave(); });
+  });
+
+  // Template
+  document.getElementById('template-grid').addEventListener('click', e => {
+    const card = e.target.closest('.template-card');
+    if (card) applyTemplate(card.dataset.tpl);
+  });
+
+  // Theme toggle
+  document.getElementById('btn-theme-toggle').addEventListener('click', toggleDarkMode);
+
+  // Dynamic lists: add buttons
+  document.getElementById('btn-add-code').addEventListener('click', () => addItem('backupCodes','backup-code-new','backup-codes-list','blue'));
+  document.getElementById('backup-code-new').addEventListener('keydown', e => { if (e.key === 'Enter') addItem('backupCodes','backup-code-new','backup-codes-list','blue'); });
+  document.getElementById('btn-add-passkey').addEventListener('click', () => addItem('passkeyLocations','passkey-new','passkey-list','green'));
+  document.getElementById('passkey-new').addEventListener('keydown', e => { if (e.key === 'Enter') addItem('passkeyLocations','passkey-new','passkey-list','green'); });
+  document.getElementById('btn-add-step').addEventListener('click', () => addItem('recoverySteps','recovery-step-new','recovery-steps-list','yellow'));
+  document.getElementById('recovery-step-new').addEventListener('keydown', e => { if (e.key === 'Enter') addItem('recoverySteps','recovery-step-new','recovery-steps-list','yellow'); });
+
+  // QR Mode toggle
+  document.getElementById('qr-mode-text').addEventListener('click', () => {
+    state.back.qrMode = 'text';
+    document.getElementById('qr-text-mode').style.display = 'flex';
+    document.getElementById('qr-upload-mode').style.display = 'none';
+    document.getElementById('qr-mode-text').classList.replace('btn-ghost','btn-outline');
+    document.getElementById('qr-mode-upload').classList.replace('btn-outline','btn-ghost');
+    renderQR();
+    debounceSave();
+  });
+
+  document.getElementById('qr-mode-upload').addEventListener('click', () => {
+    state.back.qrMode = 'upload';
+    document.getElementById('qr-text-mode').style.display = 'none';
+    document.getElementById('qr-upload-mode').style.display = 'flex';
+    document.getElementById('qr-mode-upload').classList.replace('btn-ghost','btn-outline');
+    document.getElementById('qr-mode-text').classList.replace('btn-outline','btn-ghost');
+    renderQR();
+    debounceSave();
+  });
+
+  document.getElementById('qr-text-input').addEventListener('input', () => {
+    state.back.qrText = document.getElementById('qr-text-input').value;
+    renderQR();
+    debounceSave();
+  });
+
+  document.getElementById('qr-file-input').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      qrUploadDataUrl = ev.target.result;
+      state.back.qrImageDataUrl = qrUploadDataUrl;
+      renderQR();
+      debounceSave();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Scale slider
+  const slider = document.getElementById('scale-slider');
+  applyScale(slider.value);
+  slider.addEventListener('input', () => applyScale(slider.value));
+
+  // Export buttons
+  document.getElementById('btn-export-front-png').addEventListener('click', () => exportCardPng('front'));
+  document.getElementById('btn-export-back-png').addEventListener('click', () => exportCardPng('back'));
+  document.getElementById('btn-export-both-png').addEventListener('click', exportBothPng);
+  document.getElementById('btn-export-pdf').addEventListener('click', exportPdf);
+  document.getElementById('btn-print').addEventListener('click', () => window.print());
+
+  // JSON
+  document.getElementById('btn-export-json').addEventListener('click', exportJson);
+  document.getElementById('btn-import-json').addEventListener('click', () => document.getElementById('json-file-input').click());
+  document.getElementById('json-file-input').addEventListener('change', e => {
+    if (e.target.files[0]) importJson(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  // Reset / Clear
+  document.getElementById('btn-reset-sample').addEventListener('click', () => {
+    confirm('Load sample data?', 'This will replace your current data with the sample card.', () => {
+      state = JSON.parse(JSON.stringify(SAMPLE));
+      populateForm();
+      saveState();
+      toast('Sample data loaded ✓', 'info');
+    });
+  });
+
+  document.getElementById('btn-clear-all').addEventListener('click', () => {
+    confirm('Clear all data?', 'This will erase all card data. This cannot be undone.', () => {
+      state = {
+        template: 'google',
+        front: { nickname:'',email:'',password:'',pwHint:'',phone:'',importance:'primary',recoveryEmail:'',created:'',pwUpdated:'' },
+        security: { twoStep:false, passkey:false, rEmail:false, rPhone:false },
+        back: { qrMode:'text',qrText:'',qrImageDataUrl:'',backupCodes:[],passkeyLocations:[],recoverySteps:[],pm:'',backup:'',vault:'',audit:'',version:'v1.0' },
+        darkMode: state.darkMode
+      };
+      qrUploadDataUrl = '';
+      populateForm();
+      saveState();
+      toast('All data cleared', 'info');
+    });
+  });
+
+  // Modal close
+  document.getElementById('modal-cancel').addEventListener('click', () => {
+    document.getElementById('confirm-modal').classList.remove('open');
+  });
+  document.getElementById('confirm-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+  });
+
+  // Responsive: show mobile export bar
+  function checkMobile() {
+    document.getElementById('mobile-export-bar').style.display = window.innerWidth < 600 ? 'flex' : 'none';
+  }
+  window.addEventListener('resize', checkMobile);
+  checkMobile();
+
+  toast('Card builder ready. Data saves automatically.', 'info');
+});
+</script>
+</body>
+</html>
